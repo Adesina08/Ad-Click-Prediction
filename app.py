@@ -13,7 +13,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# Path to the dataset
+# Path to the dataset file
 dataset_path = "ad_click_dataset.csv"
 
 
@@ -78,6 +78,16 @@ def plot_feature_importance(model, X):
 
 # Main Streamlit app
 def main():
+    # Initialize session state variables
+    if "model" not in st.session_state:
+        st.session_state.model = None
+    if "model_trained" not in st.session_state:
+        st.session_state.model_trained = False
+    if "model_accuracy" not in st.session_state:
+        st.session_state.model_accuracy = None
+    if "model_name" not in st.session_state:
+        st.session_state.model_name = None
+
     st.markdown(
         """
     <style>
@@ -95,31 +105,14 @@ def main():
         font-size: 24px;
         margin-bottom: 20px;
     }
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-    .modal-content {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        text-align: center;
-    }
     </style>
     """,
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        "<h1 class='main-title'>Ad Click Prediction App</h1>", unsafe_allow_html=True
+        "<h1 class='main-title'>Ad Click Prediction App 🖱️ 🎯</h1>",
+        unsafe_allow_html=True,
     )
 
     # Sidebar for data and model selection
@@ -130,15 +123,6 @@ def main():
 
     # Load data
     df = load_data()
-
-    # Initialize session state
-    if "model" not in st.session_state:
-        st.session_state.model = None
-    if "model_trained" not in st.session_state:
-        st.session_state.model_trained = False
-    if "show_modal" not in st.session_state:
-        st.session_state.show_modal = False
-        st.session_state.result = ""
 
     if option == "Data Exploration":
         st.markdown(
@@ -165,15 +149,21 @@ def main():
 
         if model_choice == "Random Forest":
             st.session_state.model = RandomForestClassifier()
+            st.session_state.model_name = "Random Forest"
         elif model_choice == "Logistic Regression":
             st.session_state.model = LogisticRegression()
+            st.session_state.model_name = "Logistic Regression"
         else:
             st.session_state.model = XGBClassifier()
+            st.session_state.model_name = "XGBoost"
 
         st.session_state.model.fit(X_train, y_train)
         y_pred = st.session_state.model.predict(X_test)
 
-        st.write("Model Accuracy:", accuracy_score(y_test, y_pred))
+        accuracy = accuracy_score(y_test, y_pred)
+        st.session_state.model_accuracy = accuracy
+
+        st.write("Model Accuracy:", accuracy)
         st.write("Classification Report:")
         st.text(classification_report(y_test, y_pred))
 
@@ -187,9 +177,13 @@ def main():
             "<h2 class='sub-title'>Make Predictions</h2>", unsafe_allow_html=True
         )
 
-        if not st.session_state.model_trained:
+        if not st.session_state.get("model_trained", False):
             st.warning("Please train a model first in the 'Model Training' section.")
         else:
+            # Display selected model and accuracy
+            st.write(f"Using model: **{st.session_state.model_name}**")
+            st.write(f"Model Accuracy: **{st.session_state.model_accuracy:.2%}**")
+
             # User input form
             user_input = {
                 "age": st.number_input("Age", min_value=18, max_value=100),
@@ -228,23 +222,10 @@ def main():
 
                 # Prediction
                 prediction = st.session_state.model.predict(user_data_processed)
-                st.session_state.result = "Click" if prediction[0] == 1 else "No Click"
-                st.session_state.show_modal = True
+                result = "Click" if prediction[0] == 1 else "No Click"
 
-    # Modal display
-    if st.session_state.show_modal:
-        st.markdown(
-            f"""
-            <div class="modal" onclick="window.location.reload();">
-                <div class="modal-content">
-                    <h3>Prediction Result</h3>
-                    <p style='font-size: 20px; font-weight: bold;'>{st.session_state.result}</p>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.session_state.show_modal = False  # Reset modal state after displaying
+                # Display result with st.success
+                st.success(f"Prediction: {result}")
 
 
 if __name__ == "__main__":
