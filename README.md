@@ -7,9 +7,7 @@ This project is a **Streamlit-based web app** that predicts whether a user will 
 - [Technologies Used](#technologies-used)
 - [Setup and Installation](#setup-and-installation)
 - [How to Use the App](#how-to-use-the-app)
-- [Screenshots](#screenshots)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 - **Data Exploration**: Explore the ad click dataset, view basic statistics, and visualize correlations.
